@@ -38,11 +38,24 @@ public class GameInfo
     public IMap Map;
     public GameRules GameRules;
 
-    public GameInfo(int turnCounter, PlayerInfo fantomTokens, List<PlayerInfo> detectivesTokens, IMap map, GameRules gameRules)
+    // Starting a new game
+    public GameInfo(IMap map, GameRules gameRules)
+    {
+        TurnCounter = 0;
+        Map = map;
+        GameRules = gameRules;
+        FantomInfo = new() { Position = null, Tokens = new(GameRules.FantomStartTokens) };
+        DetectivesInfo = new();
+        for (int i = 0; i < GameRules.NumberOfDetectives; i++)
+            DetectivesInfo.Add(new() { Position = null, Tokens = new(GameRules.DetectivesStartTokens)});
+    }
+
+    // Loading an already existing game
+    public GameInfo(int turnCounter, PlayerInfo fantomInfo, List<PlayerInfo> detectivesInfo, IMap map, GameRules gameRules)
     {
         TurnCounter = turnCounter;
-        FantomInfo = fantomTokens;
-        DetectivesInfo = detectivesTokens;
+        FantomInfo = fantomInfo;
+        DetectivesInfo = detectivesInfo;
         Map = map;
         GameRules = gameRules;
     }
