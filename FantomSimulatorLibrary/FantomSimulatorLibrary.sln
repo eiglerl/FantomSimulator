@@ -1,0 +1,43 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.8.34316.72
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FantomSimulatorLibrary", "FantomSimulatorLibrary.csproj", "{511326FC-EC3E-4D03-AB48-2EC00090C1DE}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FantomSimulatorConsoleUI", "..\FantomSimulatorConsoleUI\FantomSimulatorConsoleUI.csproj", "{539EB4F4-96CE-460C-9515-7FC2460A84D9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FantomMapLibrary", "..\FantomMapLibrary\FantomMapLibrary.csproj", "{C9E7B42F-456F-479C-9B29-40FF12478190}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FantomAIInterfaceLibrary", "..\FantomAIInterfaceLibrary\FantomAIInterfaceLibrary.csproj", "{B35FAE98-190F-4CEC-B95B-0BA582188283}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{511326FC-EC3E-4D03-AB48-2EC00090C1DE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{511326FC-EC3E-4D03-AB48-2EC00090C1DE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{511326FC-EC3E-4D03-AB48-2EC00090C1DE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{511326FC-EC3E-4D03-AB48-2EC00090C1DE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{539EB4F4-96CE-460C-9515-7FC2460A84D9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{539EB4F4-96CE-460C-9515-7FC2460A84D9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{539EB4F4-96CE-460C-9515-7FC2460A84D9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{539EB4F4-96CE-460C-9515-7FC2460A84D9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C9E7B42F-456F-479C-9B29-40FF12478190}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C9E7B42F-456F-479C-9B29-40FF12478190}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C9E7B42F-456F-479C-9B29-40FF12478190}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C9E7B42F-456F-479C-9B29-40FF12478190}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B35FAE98-190F-4CEC-B95B-0BA582188283}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B35FAE98-190F-4CEC-B95B-0BA582188283}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B35FAE98-190F-4CEC-B95B-0BA582188283}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B35FAE98-190F-4CEC-B95B-0BA582188283}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {808B15BD-DE31-439B-9474-05F0B801AE0B}
+	EndGlobalSection
+EndGlobal
