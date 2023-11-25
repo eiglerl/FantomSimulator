@@ -3,8 +3,8 @@
 namespace FantomSimulatorLibrary;
 
 public struct PlayerInfo
-{
-    public int Position;
+{ 
+    public int? Position;
     public Dictionary<Transport, int> Tokens;
 
     void updateTokens(Transport tr, int amount = -1)
