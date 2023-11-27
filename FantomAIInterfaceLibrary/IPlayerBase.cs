@@ -1,6 +1,10 @@
 ﻿namespace FantomMapLibrary;
 
-public interface IPlayerBase
+public interface IPlayerBase<MapType, NodeType>
+    where MapType : IMap<NodeType>
+    where NodeType : INode
+    //public interface IPlayerBase<MapType>
+    //    where MapType : IMap<INode>
 {
     // Called when the player's move is valid
     public void PlayIsOK(Move lastMove);
@@ -18,7 +22,7 @@ public interface IPlayerBase
     public void SetOpponentTransports(Dictionary<Transport, int> transports);
 
     // Factory method to create an instance of the player
-    public static IPlayerBase CreateInstance(IMap ggs) => throw new NotImplementedException();
+    public static IPlayerBase<MapType, NodeType> CreateInstance(MapType ggs, int numberOfDetectives) => throw new NotImplementedException();
 
     // Called when the opponent makes a move
     public void OpponentMove(Move move);
