@@ -1,14 +1,14 @@
 ﻿using FantomMapLibrary;
-using static FantomSimulatorLibrary.GameInfo;
-
 namespace FantomSimulatorLibrary;
 
-public class GameInfo
+public class GameInfo<MapType, NodeType>
+    where MapType : IMap<NodeType>
+    where NodeType : INode
 {
     public record struct WhoPlays(bool FantomPlays, int DetectiveIndex);
 
     public int TurnCounter;
-    private int _exactPlayerNow;
+    private int _exactPlayerNow = 1;
     public WhoPlays WhoPlaysNow
     {
         get
@@ -35,23 +35,23 @@ public class GameInfo
     }
     public PlayerInfo FantomInfo;
     public List<PlayerInfo> DetectivesInfo;
-    public IMap Map;
+    public MapType Map;
     public GameRules GameRules;
 
     // Starting a new game
-    public GameInfo(IMap map, GameRules gameRules)
+    public GameInfo(MapType map, GameRules gameRules)
     {
         TurnCounter = 0;
         Map = map;
         GameRules = gameRules;
         FantomInfo = new() { Position = null, Tokens = new(GameRules.FantomStartTokens) };
-        DetectivesInfo = new();
+        DetectivesInfo = [];
         for (int i = 0; i < GameRules.NumberOfDetectives; i++)
             DetectivesInfo.Add(new() { Position = null, Tokens = new(GameRules.DetectivesStartTokens)});
     }
 
     // Loading an already existing game
-    public GameInfo(int turnCounter, PlayerInfo fantomInfo, List<PlayerInfo> detectivesInfo, IMap map, GameRules gameRules)
+    public GameInfo(int turnCounter, PlayerInfo fantomInfo, List<PlayerInfo> detectivesInfo, MapType map, GameRules gameRules)
     {
         TurnCounter = turnCounter;
         FantomInfo = fantomInfo;
@@ -60,15 +60,19 @@ public class GameInfo
         GameRules = gameRules;
     }
 
-    public bool IsGameOver()
+    public enum GameOutcome { FantomWon, DetectivesWon, NotYet }
+    public GameOutcome IsGameOver()
     {
         // Game has already reached the max turns
         if (TurnCounter > GameRules.GameLen)
-            return true;
+            return GameOutcome.FantomWon;
 
         // Check if detectives are on the same position as the Fantom
-        int fantomPosition = FantomInfo.Position;
-        return IsSpaceOccupiedByDetectives(fantomPosition);
+        int? fantomPosition = FantomInfo.Position;
+        if (fantomPosition != null && IsSpaceOccupiedByDetectives(fantomPosition.Value))
+            return GameOutcome.DetectivesWon;
+
+        return GameOutcome.NotYet;
     }
 
     private bool IsSpaceOccupiedByDetectives(int pos)
@@ -99,9 +103,11 @@ public class GameInfo
             // check if the space is already occupied
                 return false;
         }
+        if (playerInfo.Position == null)
+            return true;
             
 
-        var currentNode = Map.GetNodeByID(playerInfo.Position);
+        var currentNode = Map.GetNodeByID(playerInfo.Position.Value);
         var newNode = Map.GetNodeByID(move.pos);
 
         // Can move to every non occupied space
@@ -121,7 +127,7 @@ public class GameInfo
 
     private HashSet<INode> GetAllConnectedNodes(INode node)
     {
-        HashSet<INode> nodes = new();
+        HashSet<INode> nodes = [];
         foreach (var tr in node.ConnectedNodes.Keys)
             nodes.UnionWith(node.ConnectedNodes[tr]);
         return nodes;
@@ -131,11 +137,16 @@ public class GameInfo
     public Move RandomMoveForPlayer()
     {
         var playerInfo = GetCurrentPlayer;
-        var node = Map.GetNodeByID(playerInfo.Position);
+        Random rnd = new();
+
+        // If its the players first move
+        if (playerInfo.Position == null)
+            return new(rnd.Next(Map.Nodes.Count) + 1);
+
+        var node = Map.GetNodeByID(playerInfo.Position.Value);
 
         // Select random transport
         var transportsList = node.Transports.ToList();
-        Random rnd = new();
         var randomTransport = transportsList[rnd.Next(transportsList.Count)];
 
         // Selected random possible node
@@ -150,6 +161,7 @@ public class GameInfo
     {
         var playerInfo = GetCurrentPlayer;
         playerInfo.MoveTo(move);
+        _exactPlayerNow = (_exactPlayerNow + 1)%(1 + GameRules.NumberOfDetectives);
     }
 }
 

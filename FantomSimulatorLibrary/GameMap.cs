@@ -2,9 +2,10 @@
 using FantomMapLibrary;
 
 
-public class GameMap : IMap
+public class GameMap<NodeType> : IMap<NodeType>
+    where NodeType : INode
 {
-    public List<INode> Nodes { get; init; }
+    public List<NodeType> Nodes { get; init; }
 
     public GameMap() 
     {
