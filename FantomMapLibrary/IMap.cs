@@ -1,7 +1,8 @@
 ﻿namespace FantomMapLibrary;
 
-public interface IMap
+
+public interface IMap<NodeType> where NodeType : INode
 {
-    public List<INode> Nodes { get; init; }
-    public INode GetNodeByID(int id) {  return Nodes[id-1]; }
+    public List<NodeType> Nodes { get; init; }
+    public NodeType GetNodeByID(int id) { return Nodes[id - 1]; }
 }
