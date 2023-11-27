@@ -6,17 +6,10 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <WarningLevel>7</WarningLevel>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <WarningLevel>7</WarningLevel>
-  </PropertyGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\FantomAIInterfaceLibrary\FantomAIInterfaceLibrary.csproj" />
     <ProjectReference Include="..\FantomMapLibrary\FantomMapLibrary.csproj" />
+    <ProjectReference Include="..\FantomSimulatorLibrary\FantomSimulatorLibrary.csproj" />
   </ItemGroup>
 
 </Project>

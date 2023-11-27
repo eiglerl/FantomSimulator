@@ -7,9 +7,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FantomSimulatorLibrary", "F
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FantomSimulatorConsoleUI", "..\FantomSimulatorConsoleUI\FantomSimulatorConsoleUI.csproj", "{539EB4F4-96CE-460C-9515-7FC2460A84D9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FantomMapLibrary", "..\FantomMapLibrary\FantomMapLibrary.csproj", "{C9E7B42F-456F-479C-9B29-40FF12478190}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FantomMapLibrary", "..\FantomMapLibrary\FantomMapLibrary.csproj", "{C9E7B42F-456F-479C-9B29-40FF12478190}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FantomAIInterfaceLibrary", "..\FantomAIInterfaceLibrary\FantomAIInterfaceLibrary.csproj", "{B35FAE98-190F-4CEC-B95B-0BA582188283}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FantomAIInterfaceLibrary", "..\FantomAIInterfaceLibrary\FantomAIInterfaceLibrary.csproj", "{B35FAE98-190F-4CEC-B95B-0BA582188283}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimulatorUnitTests", "..\SimulatorUnitTests\SimulatorUnitTests.csproj", "{326655D6-1A28-4A95-8B6B-77949D8E4754}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ActualSimulator", "..\ActualSimulator\ActualSimulator.csproj", "{81DB2898-78C5-4D83-9D14-D5B9FC7818E7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +37,14 @@ Global
 		{B35FAE98-190F-4CEC-B95B-0BA582188283}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B35FAE98-190F-4CEC-B95B-0BA582188283}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B35FAE98-190F-4CEC-B95B-0BA582188283}.Release|Any CPU.Build.0 = Release|Any CPU
+		{326655D6-1A28-4A95-8B6B-77949D8E4754}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{326655D6-1A28-4A95-8B6B-77949D8E4754}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{326655D6-1A28-4A95-8B6B-77949D8E4754}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{326655D6-1A28-4A95-8B6B-77949D8E4754}.Release|Any CPU.Build.0 = Release|Any CPU
+		{81DB2898-78C5-4D83-9D14-D5B9FC7818E7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{81DB2898-78C5-4D83-9D14-D5B9FC7818E7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{81DB2898-78C5-4D83-9D14-D5B9FC7818E7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{81DB2898-78C5-4D83-9D14-D5B9FC7818E7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
