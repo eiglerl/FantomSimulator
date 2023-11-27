@@ -3,9 +3,11 @@
 public class ConsoleLogger : ILogger
 {
     private int _verbosity;
+    public string Var { get; set; }
     public ConsoleLogger(int verbosity=0)
     {
         _verbosity = verbosity;
+        Var = "";
     }
     public void LogMessage(LogType type, string message)
     {
