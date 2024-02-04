@@ -20,17 +20,26 @@ public class GameInfo<MapType, NodeType>
             return new(false, _exactPlayerNow-1);
         }
     }
-    private PlayerInfo GetCurrentPlayer
+    private PlayerInfo CurrentPlayer
     {
         get
         {
             var whoPlays = WhoPlaysNow;
             PlayerInfo playerInfo;
             if (whoPlays.FantomPlays)
-                playerInfo = FantomInfo;
+                return FantomInfo;
             else
-                playerInfo = DetectivesInfo[whoPlays.DetectiveIndex];
-            return playerInfo;
+                return DetectivesInfo[whoPlays.DetectiveIndex];
+        }
+        set
+        {
+            var whoPlays = WhoPlaysNow;
+            PlayerInfo playerInfo;
+            if (whoPlays.FantomPlays)
+                FantomInfo = value;
+            else
+                DetectivesInfo[whoPlays.DetectiveIndex] = value;
+
         }
     }
     public PlayerInfo FantomInfo;
@@ -60,11 +69,10 @@ public class GameInfo<MapType, NodeType>
         GameRules = gameRules;
     }
 
-    public enum GameOutcome { FantomWon, DetectivesWon, NotYet }
     public GameOutcome IsGameOver()
     {
         // Game has already reached the max turns
-        if (TurnCounter > GameRules.GameLen)
+        if (TurnCounter >= GameRules.GameLen)
             return GameOutcome.FantomWon;
 
         // Check if detectives are on the same position as the Fantom
@@ -79,7 +87,7 @@ public class GameInfo<MapType, NodeType>
     {
         foreach (var detectiveInfo in DetectivesInfo)
         {
-            if (pos == detectiveInfo.Position)
+            if (detectiveInfo.Position is not null && pos == detectiveInfo.Position.Value)
                 return true;
         }
         return false;
@@ -96,9 +104,9 @@ public class GameInfo<MapType, NodeType>
     }
     public bool IsMovePossible(Move move)
     {
-        var playerInfo = GetCurrentPlayer;
+        var playerInfo = CurrentPlayer;
 
-        if (!WhoPlaysNow.FantomPlays && IsSpaceOccupiedByAnotherDetective(move.pos, WhoPlaysNow.DetectiveIndex))
+        if (!WhoPlaysNow.FantomPlays && IsSpaceOccupiedByAnotherDetective(move.NewPosition, WhoPlaysNow.DetectiveIndex))
         {
             // check if the space is already occupied
                 return false;
@@ -108,18 +116,18 @@ public class GameInfo<MapType, NodeType>
             
 
         var currentNode = Map.GetNodeByID(playerInfo.Position.Value);
-        var newNode = Map.GetNodeByID(move.pos);
+        var newNode = Map.GetNodeByID(move.NewPosition);
 
         // Can move to every non occupied space
         if (TurnCounter == 0)   
             return true;            
 
         // The nodes are not connected using the selected transport
-        if (!currentNode.ConnectedNodes[move.tr].Contains(newNode))
+        if (!currentNode.ConnectedNodes[move.Tr].Contains(newNode))
             return false;
 
         // Has enough tokens
-        if (playerInfo.Tokens[move.tr] > 0)
+        if (playerInfo.Tokens[move.Tr] > 0)
             return true;
 
         return false;
@@ -136,7 +144,7 @@ public class GameInfo<MapType, NodeType>
 
     public Move RandomMoveForPlayer()
     {
-        var playerInfo = GetCurrentPlayer;
+        var playerInfo = CurrentPlayer;
         Random rnd = new();
 
         // If its the players first move
@@ -159,8 +167,9 @@ public class GameInfo<MapType, NodeType>
 
     public void AcceptMove(Move move)
     {
-        var playerInfo = GetCurrentPlayer;
+        var playerInfo = CurrentPlayer;
         playerInfo.MoveTo(move);
+        CurrentPlayer = playerInfo;
         _exactPlayerNow = (_exactPlayerNow + 1)%(1 + GameRules.NumberOfDetectives);
     }
 }

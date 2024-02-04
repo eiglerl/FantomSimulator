@@ -1,5 +1,4 @@
 ﻿using FantomMapLibrary;
-
 namespace FantomSimulatorLibrary;
 
 public struct PlayerInfo
@@ -12,8 +11,8 @@ public struct PlayerInfo
 
     public void MoveTo(Move move)
     {
-        Position = move.pos;
-        if (move.tr != Transport.Nothing)
-            UpdateTokens(move.tr);
+        Position = move.NewPosition;
+        if (move.Tr != Transport.Nothing)
+            UpdateTokens(move.Tr);
     }
 }

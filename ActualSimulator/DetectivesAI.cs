@@ -67,9 +67,9 @@ public class DetectivesAI : IPlayerBase<Map, Node>
 
     public void OpponentMove(Move move)
     {
-        OpponentPosition = move.pos;
-        if (move.tr != Transport.Nothing)
-            OpponentTransports[move.tr]--;
+        OpponentPosition = move.NewPosition;
+        if (move.Tr != Transport.Nothing)
+            OpponentTransports[move.Tr]--;
     }
 
     public void PlayIsNotOK(Move lastMove)
@@ -80,9 +80,9 @@ public class DetectivesAI : IPlayerBase<Map, Node>
     public void PlayIsOK(Move lastMove)
     {
         int index = PlayerCounter;
-        CurrentPositions[index] = lastMove.pos;
-        if (lastMove.tr != Transport.Nothing)
-            Transports[index][lastMove.tr]--;
+        CurrentPositions[index] = lastMove.NewPosition;
+        if (lastMove.Tr != Transport.Nothing)
+            Transports[index][lastMove.Tr]--;
         PlayerCounter = (index + 1) % Transports.Count; 
     }
 

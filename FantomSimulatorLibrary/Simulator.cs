@@ -6,8 +6,11 @@ namespace FantomSimulatorLibrary;
 public interface ISimulator
 {
     public void SimulateOneStep();
-    public void SimulateWholeGame();
+    public GameOutcome SimulateWholeGame();
 }
+
+public enum GameOutcome { FantomWon, DetectivesWon, NotYet }
+
 
 public class Simulator<MapType, NodeType> : ISimulator
     where MapType : IMap<NodeType>
@@ -49,17 +52,18 @@ public class Simulator<MapType, NodeType> : ISimulator
         if (!_gameInfo.IsMovePossible(move))
             move = _gameInfo.RandomMoveForPlayer();
 
-        _logger.LogMessage(LogType.Info, $"Turn {_gameInfo.TurnCounter}");
-        _logger.LogMessage(LogType.Move, $"{_logger.Var} moves to {move.pos} using {move.tr}");
+        if (whoPlaysNow.FantomPlays)
+            _logger.LogMessage(LogType.Info, $"Turn {_gameInfo.TurnCounter}");
+        _logger.LogMessage(LogType.Move, $"{_logger.Var} moves to {move.NewPosition} using {move.Tr}");
         
         currentPlayer.PlayIsOK(move);
         opponentPlayer.OpponentMove(move);
 
         _gameInfo.AcceptMove(move);
 
-        if (_gameInfo.IsGameOver() != GameInfo<MapType, NodeType>.GameOutcome.NotYet)
+        if (_gameInfo.IsGameOver() != GameOutcome.NotYet)
         {
-            if (_gameInfo.IsGameOver() == GameInfo<MapType, NodeType>.GameOutcome.FantomWon)
+            if (_gameInfo.IsGameOver() == GameOutcome.FantomWon)
                 _logger.Var = "Fantom";
             else
                 _logger.Var = "Detectives";
@@ -68,12 +72,15 @@ public class Simulator<MapType, NodeType> : ISimulator
             
     }
 
-    public void SimulateWholeGame()
+    public GameOutcome SimulateWholeGame()
     {
         Console.WriteLine("Game starts");
-        while (_gameInfo.IsGameOver() == GameInfo<MapType, NodeType>.GameOutcome.NotYet)
+        while (_gameInfo.IsGameOver() == GameOutcome.NotYet)
         {
             SimulateOneStep();
         }
+
+        return _gameInfo.IsGameOver();
+        
     }
 }

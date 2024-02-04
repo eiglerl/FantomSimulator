@@ -67,9 +67,9 @@ public class FantomAI : IPlayerBase<Map, Node>
     public void OpponentMove(Move move)
     {
         int index = OpponentCounter;
-        OpponentPositions[index] = move.pos;
-        if (move.tr != Transport.Nothing)
-            OpponentTransports[index][move.tr]--;
+        OpponentPositions[index] = move.NewPosition;
+        if (move.Tr != Transport.Nothing)
+            OpponentTransports[index][move.Tr]--;
         OpponentCounter = (OpponentCounter + 1) % OpponentTransports.Count;
     }
 
@@ -80,9 +80,9 @@ public class FantomAI : IPlayerBase<Map, Node>
 
     public void PlayIsOK(Move lastMove)
     {
-        CurrentPosition = lastMove.pos;
-        if (lastMove.tr != Transport.Nothing)
-            Transports[lastMove.tr]--;
+        CurrentPosition = lastMove.NewPosition;
+        if (lastMove.Tr != Transport.Nothing)
+            Transports[lastMove.Tr]--;
     }
 
     public void SetOpponentTransports(Dictionary<Transport, int> transports)
