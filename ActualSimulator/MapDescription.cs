@@ -5,17 +5,30 @@ namespace ActualSimulator;
 public class MapDescription : IGameDescription<FantomGameState, FantomGameAction>
 {
     public FantomGameState Root => FantomGameState.Start(new Dictionary<Transport, int>() { { Transport.Cab, 10 } }, new Dictionary<Transport, int>() { { Transport.Cab, 10 } }, detectivesCount: 2);
-    public int MaxLen = 8;
+    public int MaxLen;
     public Dictionary<int, Dictionary<Transport, HashSet<INode>>> Edges;
     private Map Map;
-    public MapDescription(Map map, int gameLen)
+    private double fantomWinValue;
+    private double detectivesWinValue;
+
+    public MapDescription(Map map, int gameLen, bool fantomPlayer=true)
     {
         Map = map;
-        Edges = createEdges(map);
+        Edges = CreateEdges(map);
         MaxLen = gameLen;
+        if (fantomPlayer)
+        {
+            fantomWinValue = 1;
+            detectivesWinValue = -1;
+        }
+        else
+        {
+            fantomWinValue = -1;
+            detectivesWinValue = 1;
+        }
     }
 
-    private Dictionary<int, Dictionary<Transport, HashSet<INode>>> createEdges(Map map)
+    private Dictionary<int, Dictionary<Transport, HashSet<INode>>> CreateEdges(Map map)
     {
         var nodes = map.Nodes;
         Dictionary<int, Dictionary<Transport, HashSet<INode>>> edges = [];
@@ -205,12 +218,12 @@ public class MapDescription : IGameDescription<FantomGameState, FantomGameAction
     public double? Reward(FantomGameState state)
     {
         if (state.Turn > MaxLen)
-            return 1;
+            return fantomWinValue;
 
         foreach (var detPos in state.DetectivesPositions)
         {
             if (detPos == state.FantomPosition)
-                return -1;
+                return detectivesWinValue;
         }
 
         return null;

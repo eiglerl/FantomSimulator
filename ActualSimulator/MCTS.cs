@@ -25,15 +25,18 @@ public class MonteCarloTreeSearch<TStateName, TAction>
         public Node? Parent { get; set; }
         public TStateName StateName { get; init; }
 
+        public bool Player1Plays;
+
         public IGameDescription<TStateName, TAction> GameDescription { get; set; }
 
-        public Node(IGameDescription<TStateName, TAction> gs, TStateName stateName, Node? parent=null)
+        public Node(IGameDescription<TStateName, TAction> gs, TStateName stateName, bool player1Plays, Node? parent = null)
         {
             Visits = 0; Value = 0;
             Children = [];
             Parent = parent;
             GameDescription = gs;
             StateName = stateName;
+            Player1Plays = player1Plays;
         }
 
         public Node(Node oldNode)
@@ -48,14 +51,14 @@ public class MonteCarloTreeSearch<TStateName, TAction>
 
         public bool IsTerminal()
             => GameDescription.Reward(StateName) is not null;
-            //=> GameDescription.Actions(StateName).Count == 0;
+        //=> GameDescription.Actions(StateName).Count == 0;
         public bool IsRoot()
             => Parent is null;
 
         public void UpdateStats(double result)
         {
             Visits++;
-            if (result > 0)
+            if ((Player1Plays && result > 0) || (!Player1Plays && result < 0))
                 Wins++;
         }
 
@@ -70,7 +73,7 @@ public class MonteCarloTreeSearch<TStateName, TAction>
 
         public Tree(IGameDescription<TStateName, TAction> gameInfo, TStateName stateName)
         {
-            Root = new(gameInfo, stateName);
+            Root = new(gameInfo, stateName, player1Plays: false);
         }
 
         public Node Traverse(Node node)
@@ -80,7 +83,7 @@ public class MonteCarloTreeSearch<TStateName, TAction>
                 if (node.IsTerminal())
                     return node;
                 node = GetBestChild(node);
-                
+
             }
 
             return PickUnvisited(node);
@@ -104,7 +107,7 @@ public class MonteCarloTreeSearch<TStateName, TAction>
             foreach (var child in node.Children.Values)
             {
                 double value = UpperConfidenceBound1(child, node);
-                if (bestNode is null ||  value > max)
+                if (bestNode is null || value > max)
                 {
                     max = value;
                     bestNode = child;
@@ -118,7 +121,7 @@ public class MonteCarloTreeSearch<TStateName, TAction>
             // Unexplored node
             if (currentNode.Visits == 0)
                 return double.MaxValue;
- 
+
             return currentNode.Wins / currentNode.Visits + ExplorationParameter * Math.Sqrt(Math.Log(parent.Visits) / currentNode.Visits);
         }
 
@@ -128,10 +131,15 @@ public class MonteCarloTreeSearch<TStateName, TAction>
             var actions = node.GameDescription.Actions(node.StateName);
             var possibleActions = actions.Where(a => !keys.Contains(a)).ToList();
             TAction chosenAction = possibleActions[rnd.Next(0, possibleActions.Count)];
-            Node newNode = new(node.GameDescription, node.GameDescription.NextState(node.StateName, chosenAction), node);
+            Node newNode = new(node.GameDescription, node.GameDescription.NextState(node.StateName, chosenAction), !node.Player1Plays, node);
             node.Children[chosenAction] = newNode;
             return newNode;
         }
+
+        //public Node Determinize(Node informationSet)
+        //{
+
+        //}
 
         public double? Rollout(Node node)
         {
@@ -139,7 +147,7 @@ public class MonteCarloTreeSearch<TStateName, TAction>
             while (!variable.IsTerminal())
             {
                 var action = variable.GameDescription.Actions(variable.StateName)[rnd.Next(0, variable.GameDescription.Actions(variable.StateName).Count - 1)];
-                variable = new(variable.GameDescription, variable.GameDescription.NextState(variable.StateName, action));
+                variable = new(variable.GameDescription, variable.GameDescription.NextState(variable.StateName, action), !variable.Player1Plays);
             }
             return variable.GameDescription.Reward(variable.StateName);
         }
@@ -160,6 +168,7 @@ public class MonteCarloTreeSearch<TStateName, TAction>
 
         while (DateTime.Now < end)
         {
+            //var determinized_node = tree.Determinize(tree.Root);
             var leaf = tree.Traverse(tree.Root);
             var simulationResult = tree.Rollout(leaf);
             if (simulationResult is not null)
@@ -167,6 +176,7 @@ public class MonteCarloTreeSearch<TStateName, TAction>
         }
 
         var result = tree.Root.Children.MaxBy(item => item.Value.Wins).Key;
+        //var result = tree.Root.Children.MaxBy(item => ((double)item.Value.Wins / item.Value.Visits)).Key;
         return result;
     }
 
@@ -206,10 +216,10 @@ public struct GlassesFantomAction
         unchecked
         {
             int hash = 17;
-            foreach (var move in Moves)
+            foreach (var (From, To) in Moves)
             {
-                hash = hash * 23 + move.From.GetHashCode();
-                hash = hash * 23 + move.To.GetHashCode();
+                hash = hash * 23 + From.GetHashCode();
+                hash = hash * 23 + To.GetHashCode();
             }
             return hash;
         }
@@ -228,8 +238,9 @@ public struct GlassesFantomAction
 public class GlassesFantomGame : IGameDescription<GlassesFantomState, GlassesFantomAction>
 {
     public int GameLen = 8;
-    public GlassesFantomState Root 
-    { get
+    public GlassesFantomState Root
+    {
+        get
         {
             return new() { FantomPosition = 4, DetectivesPositions = [1, 2], FantomsTurn = true, Turn = 0 };
         }
@@ -259,7 +270,7 @@ public class GlassesFantomGame : IGameDescription<GlassesFantomState, GlassesFan
         GlassesFantomState newState = new(state);
         if (state.FantomsTurn)
         {
-            newState.FantomPosition = action.Moves[0].To;   
+            newState.FantomPosition = action.Moves[0].To;
         }
         else
         {
@@ -289,10 +300,10 @@ public class GlassesFantomGame : IGameDescription<GlassesFantomState, GlassesFan
 
     static List<GlassesFantomAction> GenerateCombinations(List<int> positions, Dictionary<int, HashSet<int>> edges)
     {
-        List<int> reversed = new List<int>(positions);
+        List<int> reversed = new(positions);
         reversed.Reverse();
-        List<GlassesFantomAction> allCombinations = new List<GlassesFantomAction>();
-        GenerateCombinationsHelper(reversed, edges, 0, new List<(int From, int To)>(), allCombinations);
+        List<GlassesFantomAction> allCombinations = [];
+        GenerateCombinationsHelper(reversed, edges, 0, [], allCombinations);
         return allCombinations;
     }
 

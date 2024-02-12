@@ -36,16 +36,16 @@ public class FantomAIMCTS : IPlayerBase<Map, Node>
     {
         Map = map;
         Transports = [];
-        OpponentTransports = new();
+        OpponentTransports = [];
         OpponentPositions = [];
         OpponentMoves = [];
         for (int i = 0; i < numberOfDetectives; i++)
         {
-            OpponentTransports.Add(new());
+            OpponentTransports.Add([]);
             OpponentPositions.Add(null);
         }
 
-        MapDescription = new MapDescription(Map, 8);
+        MapDescription = new MapDescription(Map, gameLen: 8);
         //MonteCarloTreeSearch = new MonteCarloTreeSearch<FantomGameState, FantomGameAction>();
     }
 
@@ -53,7 +53,7 @@ public class FantomAIMCTS : IPlayerBase<Map, Node>
     {
         var tree = new MonteCarloTreeSearch<FantomGameState, FantomGameAction>.Tree(MapDescription, CurrentState);
         MonteCarloTreeSearch<FantomGameState, FantomGameAction> mcts = new();
-        FantomGameAction move = mcts.Simulate(tree, 1);
+        FantomGameAction move = mcts.Simulate(tree, 0.1);
         return move.Moves[0];
     }
 
@@ -68,7 +68,7 @@ public class FantomAIMCTS : IPlayerBase<Map, Node>
         OpponentMoves.Add(move);
         if (index == OpponentPositions.Count - 1)
         {
-            CurrentState = MapDescription.NextState(CurrentState, new FantomGameAction() { Moves = OpponentMoves });
+            CurrentState = MapDescription.NextState(CurrentState, new FantomGameAction() { Moves = new(OpponentMoves) });
             OpponentMoves = [];
         }
 

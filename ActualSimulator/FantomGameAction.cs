@@ -7,7 +7,7 @@ public struct FantomGameAction
     //public List<Transport?> UsedTransports;
     public List<Move> Moves;
 
-    public override int GetHashCode()
+    public override readonly int GetHashCode()
     {
         unchecked
         {
@@ -21,7 +21,7 @@ public struct FantomGameAction
         }
     }
 
-    public override bool Equals(object obj)
+    public override readonly bool Equals(object obj)
     {
         if (obj is FantomGameAction otherAction)
         {

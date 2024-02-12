@@ -25,7 +25,6 @@ public class GameInfo<MapType, NodeType>
         get
         {
             var whoPlays = WhoPlaysNow;
-            PlayerInfo playerInfo;
             if (whoPlays.FantomPlays)
                 return FantomInfo;
             else
@@ -34,7 +33,6 @@ public class GameInfo<MapType, NodeType>
         set
         {
             var whoPlays = WhoPlaysNow;
-            PlayerInfo playerInfo;
             if (whoPlays.FantomPlays)
                 FantomInfo = value;
             else
@@ -144,7 +142,13 @@ public class GameInfo<MapType, NodeType>
 
     public Move RandomMoveForPlayer()
     {
+
         var playerInfo = CurrentPlayer;
+        if (WhoPlaysNow.FantomPlays)
+            Console.WriteLine("WTF Fantom");
+        else
+            Console.WriteLine("WTF Detectives");
+
         Random rnd = new();
 
         // If its the players first move

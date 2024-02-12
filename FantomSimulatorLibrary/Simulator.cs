@@ -20,6 +20,7 @@ public class Simulator<MapType, NodeType> : ISimulator
     private GameInfo<MapType, NodeType> _gameInfo;
     private IPlayerBase<MapType, NodeType> _fantomPlayer;
     private IPlayerBase<MapType, NodeType> _detectivesPlayer;
+    private HashSet<int> _fantomVisibleTurns = [];
 
 
     public Simulator(GameInfo<MapType, NodeType> gameInfo, IPlayerBase<MapType, NodeType> fantom, IPlayerBase<MapType, NodeType> detectives, ILogger logger)
@@ -57,7 +58,10 @@ public class Simulator<MapType, NodeType> : ISimulator
         _logger.LogMessage(LogType.Move, $"{_logger.Var} moves to {move.NewPosition} using {move.Tr}");
         
         currentPlayer.PlayIsOK(move);
-        opponentPlayer.OpponentMove(move);
+        if (whoPlaysNow.FantomPlays && !_fantomVisibleTurns.Contains(_gameInfo.TurnCounter))
+            opponentPlayer.OpponentMove(new Move(move.Tr));
+        else
+            opponentPlayer.OpponentMove(move);
 
         _gameInfo.AcceptMove(move);
 

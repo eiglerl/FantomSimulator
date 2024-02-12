@@ -16,11 +16,11 @@ public class FantomAI : IPlayerBase<Map, Node>
     {
         Map = map;
         Transports = [];
-        OpponentTransports = new();
+        OpponentTransports = [];
         OpponentPositions = [];
         for (int i = 0; i < numberOfDetectives; i++)
         {
-            OpponentTransports.Add(new());
+            OpponentTransports.Add([]);
             OpponentPositions.Add(null);
         }
     }
