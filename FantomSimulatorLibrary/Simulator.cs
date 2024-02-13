@@ -20,7 +20,10 @@ public class Simulator<MapType, NodeType> : ISimulator
     private GameInfo<MapType, NodeType> _gameInfo;
     private IPlayerBase<MapType, NodeType> _fantomPlayer;
     private IPlayerBase<MapType, NodeType> _detectivesPlayer;
-    private HashSet<int> _fantomVisibleTurns = [];
+    private HashSet<int> _fantomVisibleTurns = [2,5];
+    // [3,5] - 33/50 fantom win
+    // [5] - 45/50
+    // [2,5] 34/50
 
 
     public Simulator(GameInfo<MapType, NodeType> gameInfo, IPlayerBase<MapType, NodeType> fantom, IPlayerBase<MapType, NodeType> detectives, ILogger logger)
@@ -59,9 +62,17 @@ public class Simulator<MapType, NodeType> : ISimulator
         
         currentPlayer.PlayIsOK(move);
         if (whoPlaysNow.FantomPlays && !_fantomVisibleTurns.Contains(_gameInfo.TurnCounter))
+        {
             opponentPlayer.OpponentMove(new Move(move.Tr));
+            //if (whoPlaysNow.FantomPlays)
+            //    Console.WriteLine($"Detectives recieve {new Move(move.Tr).NewPosition}");
+        }
         else
+        {
             opponentPlayer.OpponentMove(move);
+            //if (whoPlaysNow.FantomPlays)
+            //    Console.WriteLine($"Detectives recieve {move.NewPosition}");
+        }
 
         _gameInfo.AcceptMove(move);
 
@@ -79,6 +90,10 @@ public class Simulator<MapType, NodeType> : ISimulator
     public GameOutcome SimulateWholeGame()
     {
         Console.WriteLine("Game starts");
+        Console.Write($"Visible turns: ");
+        foreach (var t in _fantomVisibleTurns)
+            Console.Write($"{t}, ");
+        Console.WriteLine();
         while (_gameInfo.IsGameOver() == GameOutcome.NotYet)
         {
             SimulateOneStep();

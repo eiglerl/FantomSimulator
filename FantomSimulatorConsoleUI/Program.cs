@@ -8,12 +8,13 @@ internal class Program
     static void Main(string[] args)
     {
         int numberOfDetectives = 2;
-        Dictionary<Transport, int> initialTokens = new() { { Transport.Cab, 12 } };
-        Map map = MapCreator.EasyMap();
+        Dictionary<Transport, int> initialTokens = new() { { Transport.Cab, 12 }, { Transport.Taxi, 5 } };
+        //Map map = MapCreator.EasyMap();
         //Map map = MapCreator.CircleWithX();
-        //Map map = MapCreator.CheckBoard(3, 3);
+        //Map map = MapCreator.CheckBoard(4, 4);
+        Map map = MapCreator.CheckBoardWithTwoVehicles(4, 4);
 
-        int numberOfRepeats = 20;
+        int numberOfRepeats = 1;
         int fantomWins = 0;
 
         for (int i = 0; i < numberOfRepeats; i++)
@@ -25,8 +26,8 @@ internal class Program
 
             //var fantom = FantomAI.CreateInstance(map, numberOfDetectives); // 7/100
             var fantom = FantomAIMCTS.CreateInstance(map, numberOfDetectives); // 74/100 with 1 sec time, 
-            var detectives = DetectivesAI.CreateInstance(map, numberOfDetectives);
-            //var detectives = DetectivesAIMCTS.CreateInstance(map, numberOfDetectives);
+            //var detectives = DetectivesAI.CreateInstance(map, numberOfDetectives);
+            var detectives = DetectivesAIMCTS.CreateInstance(map, numberOfDetectives);
             fantom.SetTransports(initialTokens);
             fantom.SetOpponentTransports(initialTokens);
             detectives.SetTransports(initialTokens);
@@ -35,7 +36,7 @@ internal class Program
             Simulator<Map, Node> simulator = new(gameInfo: gameInfo,
                 fantom: fantom,
                 detectives: detectives,
-                logger: new ConsoleLogger(verbosity: 0));
+                logger: new ConsoleLogger(verbosity: 5));
 
             var outcome = simulator.SimulateWholeGame();
             if (outcome == GameOutcome.FantomWon)
@@ -104,6 +105,67 @@ class MapCreator
 
         List<(int, int)> connections = new() { (1, 2), (2, 3), (3, 4), (4, 5), (5, 6), (6, 7), (7, 8), (8, 1), (1, 9), (3, 9), (5, 9), (7, 9) };
         return CreateMapFromConnections(9, connections);
+    }
+
+    public static Map CheckBoardWithTwoVehicles(int rowLen, int colLen)
+    {
+        List<(int, int)> connectionsCab = [];
+        List<(int, int)> connectionsTaxi = [];
+        for (int i = 0; i < rowLen; i++)
+        {
+            for (int j = 0; j < colLen; j++)
+            {
+                int current = i + j * rowLen + 1;
+                if (i < rowLen - 1)
+                    connectionsCab.Add((current, current + 1));
+                if (j < colLen - 1)
+                    connectionsCab.Add((current, current + rowLen));
+
+                if (i % 2 == 0 && j % 2 == 0)
+                {
+                    if (i < rowLen)
+                        connectionsTaxi.Add((current, current + 2));
+                    if (j < colLen - 2)
+                        connectionsTaxi.Add((current, current + rowLen));
+                }
+
+                if (i % 2 == 0 && i < rowLen - 2 && j % 2 == 0 && j < colLen - 2)
+                    connectionsTaxi.Add((current, current + 2));
+                //if (j % 2 == 0 && j < colLen - 2)
+                //    connectionsTaxi.Add((current, current + rowLen));
+            }
+        }
+
+        List<Node> nodes = [];
+        var cab = Transport.Cab;
+        var taxi = Transport.Taxi;
+        int numberOfNodes = rowLen * colLen;
+
+        for (int i = 0; i < numberOfNodes; i++)
+        {
+            HashSet<Transport> transports = [cab];
+            Dictionary<Transport, HashSet<INode>> connected = new() { { cab, [] } };
+            if ((i+1) % 2 == 1)
+            {
+                transports.Add(taxi);
+                connected.Add(taxi, []);
+            }
+            nodes.Add(new Node(ID: i + 1, transports, connected));
+        }
+
+        foreach ((int i, int j) in connectionsCab)
+        {
+            nodes[i - 1].ConnectedNodes[cab].Add(nodes[j - 1]);
+            nodes[j - 1].ConnectedNodes[cab].Add(nodes[i - 1]);
+        }
+
+        foreach ((int i, int j) in connectionsTaxi)
+        {
+            nodes[i - 1].ConnectedNodes[taxi].Add(nodes[j - 1]);
+            nodes[j - 1].ConnectedNodes[taxi].Add(nodes[i - 1]);
+        }
+        return new(nodes);
+
     }
 
     public static Map CheckBoard(int rowLen, int colLen)

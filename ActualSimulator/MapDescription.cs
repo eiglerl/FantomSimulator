@@ -1,4 +1,5 @@
 ﻿using FantomMapLibrary;
+using System;
 using System.Linq;
 namespace ActualSimulator;
 
@@ -10,8 +11,9 @@ public class MapDescription : IGameDescription<FantomGameState, FantomGameAction
     private Map Map;
     private double fantomWinValue;
     private double detectivesWinValue;
+    Random rnd;
 
-    public MapDescription(Map map, int gameLen, bool fantomPlayer=true)
+    public MapDescription(Map map, int gameLen, bool fantomPlayer=true, int seed=42)
     {
         Map = map;
         Edges = CreateEdges(map);
@@ -26,7 +28,11 @@ public class MapDescription : IGameDescription<FantomGameState, FantomGameAction
             fantomWinValue = -1;
             detectivesWinValue = 1;
         }
+        rnd = new Random(seed);
     }
+
+    //private bool IsFantomVisible(FantomGameState state) 
+    //    => FantomVisibleTurns.Contains(state.Turn);
 
     private Dictionary<int, Dictionary<Transport, HashSet<INode>>> CreateEdges(Map map)
     {
@@ -191,7 +197,48 @@ public class MapDescription : IGameDescription<FantomGameState, FantomGameAction
         var copyState = state.Deepcopy();
         if (state.FantomsTurn)
         {
-            copyState.FantomPosition = action.Moves[0].NewPosition;
+            // Fantom is visible
+            if (action.Moves[0].ContainsPosition())
+            {
+                copyState.FantomPosition = action.Moves[0].NewPosition;
+                copyState.FantomPossiblePositions = [action.Moves[0].NewPosition];
+            }
+
+            // First turn (Fantom can be anywhere)
+            else if (!action.Moves[0].ContainsTransport())
+            {
+                copyState.FantomPosition = null;
+                copyState.FantomPossiblePositions = [];
+                foreach (var node in Map.Nodes)
+                {
+                    if (!state.DetectivesPositions.Contains(node.ID))
+                        copyState.FantomPossiblePositions.Add(node.ID);
+                }
+            }
+
+            // Other turns (we know used transport and previous possible positions => set of new possible positions)
+            else
+            {
+                HashSet<int> temp = [];
+                HashSet<int> taken = state.DetectivesPositions.Select(n => n.Value).ToHashSet();
+
+                foreach (var pos in copyState.FantomPossiblePositions)
+                {
+                    //HashSet<INode>? possibleNodes;
+                    if (!Edges[pos].TryGetValue(action.Moves[0].Tr, out HashSet<INode>? possibleNodes))
+                        continue;
+                    //var possibleNodes = Edges[pos][action.Moves[0].Tr];
+                    foreach (var node in possibleNodes)
+                    {
+                        if (!taken.Contains(node.ID))
+                            temp.Add(node.ID);
+                    }
+                }
+                copyState.FantomPosition = null;
+                copyState.FantomPossiblePositions = temp;
+            }
+
+            // Update transports
             if (action.Moves[0].Tr != Transport.Nothing)
                 copyState.FantomTokens[action.Moves[0].Tr]--;
             //copyState.FantomPosition = action.Moves[0].To;
@@ -214,6 +261,46 @@ public class MapDescription : IGameDescription<FantomGameState, FantomGameAction
         copyState.FantomsTurn = !copyState.FantomsTurn;
         return copyState;
     }
+
+    public Dictionary<FantomGameAction, FantomGameState>? GetAllDeterminizationsIfInfoSet(FantomGameState state)
+    {
+        if (state.Turn == 0)
+        {
+            foreach (var node in Map.Nodes)
+            {
+                if (!state.DetectivesPositions.Contains(node.ID))
+                    state.FantomPossiblePositions.Add(node.ID);
+            }
+                
+        }
+        if (state.FantomPossiblePositions.Count <= 1) 
+            return null;
+        
+        var possibleStates = state.FantomPossiblePositions.ToArray();
+        var dict = new Dictionary<FantomGameAction, FantomGameState>();
+
+        foreach (var ps in possibleStates)
+        {
+            var determinizedSTate = state.Deepcopy();
+            determinizedSTate.FantomPosition = ps;
+            determinizedSTate.FantomPossiblePositions = [ps];
+            dict.Add(new() { Moves = [new Move() { NewPosition = ps }] }, determinizedSTate);
+        }
+        return dict;
+    }
+
+    //public FantomGameState DeterminizeUniform(FantomGameState state)
+    //{
+    //    var determinizedState = state.Deepcopy();
+    //    int possibleStatesCount = determinizedState.FantomPossiblePositions.Count;
+    //    if (possibleStatesCount == 1)
+    //        return determinizedState;
+    //    var possibleStates = determinizedState.FantomPossiblePositions.ToArray();
+    //    var chosenState = possibleStates[rnd.Next(possibleStatesCount)];
+    //    determinizedState.FantomPosition = chosenState;
+    //    determinizedState.FantomPossiblePositions = [];
+    //    return determinizedState;
+    //}
 
     public double? Reward(FantomGameState state)
     {
