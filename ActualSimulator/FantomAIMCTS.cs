@@ -6,15 +6,13 @@ namespace ActualSimulator;
 public class FantomAIMCTS : IPlayerBase<Map, Node>
 {
     Map Map { get; set; }
-    Dictionary<Transport, int> Transports { get; set; }
-    List<Dictionary<Transport, int>> OpponentTransports { get; set; }
+    PlayerInfo Player;
+    List<PlayerInfo> Opponents;
 
-    int? CurrentPosition = null;
-    List<int?> OpponentPositions;
+    int numberOfDetectives;
     int OpponentCounter = 0;
     List<Move> OpponentMoves;
 
-    //MonteCarloTreeSearch<FantomGameState, FantomGameAction> MonteCarloTreeSearch { get; set; }
     MapDescription MapDescription { get; set; }
 
     FantomGameState? currentState = null;
@@ -22,7 +20,7 @@ public class FantomAIMCTS : IPlayerBase<Map, Node>
     {
         get
         {
-            currentState  ??= FantomGameState.Start(Transports, OpponentTransports[0]);
+            currentState ??= FantomGameState.Start(Player.Tokens, Opponents[0].Tokens, detectivesCount: numberOfDetectives);
             return currentState.Value;
         }
         set
@@ -35,25 +33,23 @@ public class FantomAIMCTS : IPlayerBase<Map, Node>
     private FantomAIMCTS(Map map, int numberOfDetectives)
     {
         Map = map;
-        Transports = [];
-        OpponentTransports = [];
-        OpponentPositions = [];
+        Player = new() { Position = null, Tokens = [] };
+        Opponents = [];
         OpponentMoves = [];
+        this.numberOfDetectives = numberOfDetectives;
         for (int i = 0; i < numberOfDetectives; i++)
         {
-            OpponentTransports.Add([]);
-            OpponentPositions.Add(null);
+            Opponents.Add(new() { Position = null, Tokens = [] });
         }
 
-        MapDescription = new MapDescription(Map, gameLen: 8);
-        //MonteCarloTreeSearch = new MonteCarloTreeSearch<FantomGameState, FantomGameAction>();
+        MapDescription = new MapDescription(Map, gameLen: 15);
     }
 
     public Move GetMove()
     {
         var tree = new MonteCarloTreeSearch<FantomGameState, FantomGameAction>.Tree(MapDescription, CurrentState);
         MonteCarloTreeSearch<FantomGameState, FantomGameAction> mcts = new();
-        FantomGameAction move = mcts.Simulate(tree, 0.1);
+        FantomGameAction move = mcts.Simulate(tree, 0.2);
         return move.Moves[0];
     }
 
@@ -66,17 +62,15 @@ public class FantomAIMCTS : IPlayerBase<Map, Node>
     {
         int index = OpponentCounter;
         OpponentMoves.Add(move);
-        if (index == OpponentPositions.Count - 1)
+
+        if (index == numberOfDetectives - 1)
         {
             CurrentState = MapDescription.NextState(CurrentState, new FantomGameAction() { Moves = new(OpponentMoves) });
             OpponentMoves = [];
         }
 
-        OpponentPositions[index] = move.NewPosition;
-        if (move.Tr != Transport.Nothing)
-            OpponentTransports[index][move.Tr]--;
-        OpponentCounter = (OpponentCounter + 1) % OpponentPositions.Count;
-
+        Opponents[index].MoveTo(move);
+        OpponentCounter = (OpponentCounter + 1) % numberOfDetectives;
     }
 
     public void PlayIsNotOK(Move lastMove)
@@ -86,21 +80,18 @@ public class FantomAIMCTS : IPlayerBase<Map, Node>
 
     public void PlayIsOK(Move lastMove)
     {
-        CurrentPosition = lastMove.NewPosition;
-        if (lastMove.Tr != Transport.Nothing)
-            Transports[lastMove.Tr]--;
-
+        Player.MoveTo(lastMove);
         CurrentState = MapDescription.NextState(CurrentState, new FantomGameAction() { Moves = [lastMove] });
     }
 
     public void SetOpponentTransports(Dictionary<Transport, int> transports)
     {
-        for (int i = 0; i < OpponentTransports.Count; i++)
-            OpponentTransports[i] = new(transports);
+        for (int i = 0; i < numberOfDetectives; i++)
+            Opponents[i] = new() { Position = Opponents[i].Position, Tokens = new(transports) };
     }
 
     public void SetTransports(Dictionary<Transport, int> transports)
-        => Transports = new(transports);
+        => Player = new() { Position = Player.Position, Tokens= new(transports) };
 
     public static FantomAIMCTS CreateInstance(Map ggs, int numberOfDetectives) => new(ggs, numberOfDetectives);
 
