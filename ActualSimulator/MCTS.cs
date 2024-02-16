@@ -190,32 +190,50 @@ public class MonteCarloTreeSearch<TStateName, TAction>
         return newNode;
     }
 
-    public TAction Simulate(Tree tree, double time)
+    private Node PrepareDeterminizationsIfNeccessary(Node root)
     {
-        Node simulationRoot = tree.Root;
+        Node simulationRoot = root;
 
         // Check if the root is an infoset with >1 histories
-        var det = tree.Root.GameDescription.GetAllDeterminizationsInInfoSet(tree.Root.StateName);
+        var det = root.GameDescription.GetAllDeterminizationsInInfoSet(root.StateName);
         // Create a temp root with a child for each determinization if it is
         if (det is not null)
-            simulationRoot = CreateNodeFromDeterminizations(tree.Root, det);
+            simulationRoot = CreateNodeFromDeterminizations(root, det);
+
+        return simulationRoot;
+    }
+
+    public TAction Simulate(Tree tree, double time)
+    {
+        var simulationRoot = PrepareDeterminizationsIfNeccessary(tree.Root);
 
         DateTime end = DateTime.Now.AddSeconds(time);
 
-        int numberOfIterations = 0;
         while (DateTime.Now < end)
         {
             var leaf = tree.Traverse(simulationRoot);
             var simulationResult = tree.Rollout(leaf);
-            if (simulationResult is not null)
+            if (simulationResult.HasValue)
                 tree.BackPropagate(leaf, simulationResult.Value);
-            numberOfIterations++;
         }
-        Console.WriteLine($"MCTS number of iterations: {numberOfIterations}");
 
         return BestActionWithDeterminization(simulationRoot);
     }
 
+    public TAction Simulate(Tree tree, int iterations)
+    {
+        var simulationRoot = PrepareDeterminizationsIfNeccessary(tree.Root);
+
+        for (int i = 0; i < iterations; i++)
+        {
+            var leaf = tree.Traverse(simulationRoot);
+            var simulationResult = tree.Rollout(leaf);
+            if (simulationResult.HasValue)
+                tree.BackPropagate(leaf, simulationResult.Value);
+        }
+
+        return BestActionWithDeterminization(simulationRoot);
+    }
 
     private TAction BestActionWithDeterminization(Node root)
     {
