@@ -8,32 +8,26 @@ public interface IGameDescription<TStateName, TAction>
 {
     public TStateName NextState(TStateName stateName, TAction action);
     public List<TAction> Actions(TStateName stateName);
-    public Dictionary<TAction, TStateName>? GetAllDeterminizationsIfInfoSet(TStateName stateName);
+    public TAction RandomAction(TStateName stateName, HashSet<TAction> usedActions);
+    public TAction RandomAction(TStateName stateName);
+    public long NumberOfActions(TStateName stateName);
+    public Dictionary<TAction, TStateName>? GetAllDeterminizationsInInfoSet(TStateName stateName);
     public double? Reward(TStateName stateName);
     public TStateName Root { get; }
 }
 
-
-//public interface IDeterminizableState<TState>
-//{
-//    public List<TState> DeterminizeUniform();
-//}
-
 public class MonteCarloTreeSearch<TStateName, TAction>
     where TAction : notnull
-    //where TStateName : IDeterminizableState<TStateName>
 {
-    public double ExplorationParameter = Math.Sqrt(2);
-    public Random rnd = new();
-
     public class Node
     {
         public int Visits { get; set; }
         public int Wins { get; set; }
-        public double Value { get; set; }
+        //public double Value { get; set; }
         public Dictionary<TAction, Node> Children { get; set; }
         public Node? Parent { get; set; }
         public TStateName StateName { get; set; }
+        public bool DeterminizationNode { get; set; } = false;
 
         public bool Player1Plays;
 
@@ -41,7 +35,7 @@ public class MonteCarloTreeSearch<TStateName, TAction>
 
         public Node(IGameDescription<TStateName, TAction> gs, TStateName stateName, bool player1Plays, Node? parent = null)
         {
-            Visits = 0; Value = 0;
+            Visits = 0;
             Children = [];
             Parent = parent;
             GameDescription = gs;
@@ -52,7 +46,6 @@ public class MonteCarloTreeSearch<TStateName, TAction>
         public Node(Node oldNode)
         {
             Visits = oldNode.Visits;
-            Value = oldNode.Value;
             Children = new(oldNode.Children);
             Parent = oldNode.Parent;
             GameDescription = oldNode.GameDescription;
@@ -61,7 +54,12 @@ public class MonteCarloTreeSearch<TStateName, TAction>
 
         public bool IsTerminal()
             => GameDescription.Reward(StateName) is not null;
-        //=> GameDescription.Actions(StateName).Count == 0;
+        //public double GetReward()
+        //{
+        //    var reward = GameDescription.Reward(StateName);
+
+        //}
+
         public bool IsRoot()
             => Parent is null;
 
@@ -94,34 +92,41 @@ public class MonteCarloTreeSearch<TStateName, TAction>
         {
             while (IsFullyExpanded(node))
             {
-                if (node.IsTerminal())
-                    return node;
                 node = GetBestChild(node);
-
             }
-
+            if (node.IsTerminal())
+                return node;
             return PickUnvisited(node);
         }
 
         public bool IsFullyExpanded(Node node)
         {
-            if (node.Children.Count > node.GameDescription.Actions(node.StateName).Count)
-            {
-                Console.WriteLine("wtf");
-            }
-            if (node.Children.Count == node.GameDescription.Actions(node.StateName).Count)
+            if (node.DeterminizationNode || (node.Children.Count == node.GameDescription.NumberOfActions(node.StateName) && !node.IsTerminal()))//node.GameDescription.NumberOfActions(node.StateName))
                 return true;
             return false;
         }
 
-        public Node? GetBestChild(Node node)
+        private Node GetRandomDeterminization(Node node)
         {
+            var possibleActions = node.Children.Keys.ToList();
+            return node.Children[possibleActions[rnd.Next(possibleActions.Count)]];
+        }
+
+        public Node GetBestChild(Node node)
+        {
+            // If node is information set with >1 histories
+            if (node.DeterminizationNode)
+                // return a random determinization
+                return GetRandomDeterminization(node);
+
+            // else return the child with highest criterion
             double max = 0;
-            Node? bestNode = null;
+            Node bestNode = node.Children.Values.First();
             foreach (var child in node.Children.Values)
             {
+                // the criterion is UPC1
                 double value = UpperConfidenceBound1(child, node);
-                if (bestNode is null || value > max)
+                if (value > max)
                 {
                     max = value;
                     bestNode = child;
@@ -132,7 +137,7 @@ public class MonteCarloTreeSearch<TStateName, TAction>
 
         private double UpperConfidenceBound1(Node currentNode, Node parent)
         {
-            // Unexplored node
+            // Unexplored node => has high value
             if (currentNode.Visits == 0)
                 return double.MaxValue;
 
@@ -141,33 +146,23 @@ public class MonteCarloTreeSearch<TStateName, TAction>
 
         public Node PickUnvisited(Node node)
         {
-            var keys = node.Children.Keys;
-            var actions = node.GameDescription.Actions(node.StateName);
-            var possibleActions = actions.Where(a => !keys.Contains(a)).ToList();
-            TAction chosenAction = possibleActions[rnd.Next(0, possibleActions.Count)];
-            Node newNode = new(node.GameDescription, node.GameDescription.NextState(node.StateName, chosenAction), !node.Player1Plays, node);
-            node.Children[chosenAction] = newNode;
+            // pick random possible action, create a child and update the parent
+            var randomAction = node.GameDescription.RandomAction(node.StateName, node.Children.Keys.ToHashSet());
+            Node newNode = new(node.GameDescription, node.GameDescription.NextState(node.StateName, randomAction), !node.Player1Plays, node);
+            node.Children[randomAction] = newNode;
             return newNode;
         }
 
-        //public List<TStateName> Determinize(Node informationSet)
-        //{
-        //    var determinizedState = informationSet.StateName.DeterminizeUniform();
-        //    return determinizedState;
-        //    //var newNode = new Node(informationSet);
-        //    //newNode.StateName = determinizedState;
-        //    //return newNode;
-        //}
-
         public double? Rollout(Node node)
         {
-            Node variable = new(node);
-            while (!variable.IsTerminal())
+            Node tempNode = new(node);
+            while (!tempNode.IsTerminal())
             {
-                var action = variable.GameDescription.Actions(variable.StateName)[rnd.Next(0, variable.GameDescription.Actions(variable.StateName).Count - 1)];
-                variable = new(variable.GameDescription, variable.GameDescription.NextState(variable.StateName, action), !variable.Player1Plays);
+                var action = tempNode.GameDescription.RandomAction(tempNode.StateName);
+                var newState = tempNode.GameDescription.NextState(tempNode.StateName, action);
+                tempNode = new(tempNode.GameDescription, newState, !tempNode.Player1Plays);
             }
-            return variable.GameDescription.Reward(variable.StateName);
+            return tempNode.GameDescription.Reward(tempNode.StateName);
         }
 
         public void BackPropagate(Node? node, double result)
@@ -186,6 +181,7 @@ public class MonteCarloTreeSearch<TStateName, TAction>
             return parent;
 
         var newNode = new Node(parent);
+        newNode.DeterminizationNode = true;
         foreach (TAction key in determinizations.Keys)
         {
             var child = new Node(parent.GameDescription, determinizations[key], parent.Player1Plays, parent);
@@ -196,55 +192,51 @@ public class MonteCarloTreeSearch<TStateName, TAction>
 
     public TAction Simulate(Tree tree, double time)
     {
-
-        Node root = tree.Root;
         Node simulationRoot = tree.Root;
-        bool determinizationHappened = false;
-        var det = tree.Root.GameDescription.GetAllDeterminizationsIfInfoSet(tree.Root.StateName);
-        List<TAction> possibleActions = [];
-        
+
+        // Check if the root is an infoset with >1 histories
+        var det = tree.Root.GameDescription.GetAllDeterminizationsInInfoSet(tree.Root.StateName);
+        // Create a temp root with a child for each determinization if it is
         if (det is not null)
-        {
-            possibleActions = det.Keys.ToList();
-            root = CreateNodeFromDeterminizations(tree.Root, det);
-            determinizationHappened = true;
-        }
+            simulationRoot = CreateNodeFromDeterminizations(tree.Root, det);
 
         DateTime end = DateTime.Now.AddSeconds(time);
 
+        int numberOfIterations = 0;
         while (DateTime.Now < end)
         {
-            if (determinizationHappened)
-            {
-                simulationRoot = root.Children[possibleActions[rnd.Next(possibleActions.Count)]];
-            }
             var leaf = tree.Traverse(simulationRoot);
-            //var leaf = tree.Traverse(tree.Root);
             var simulationResult = tree.Rollout(leaf);
             if (simulationResult is not null)
                 tree.BackPropagate(leaf, simulationResult.Value);
+            numberOfIterations++;
         }
+        Console.WriteLine($"MCTS number of iterations: {numberOfIterations}");
 
-        if (!determinizationHappened)
-            return simulationRoot.Children.MaxBy(item => item.Value.Wins).Key;
-        //var result = tree.Root.Children.MaxBy(item => item.Value.Wins).Key;
-        //var result = tree.Root.Children.MaxBy(item => ((double)item.Value.Wins / item.Value.Visits)).Key;
-        return BestActionWithDeterminization(root);
+        return BestActionWithDeterminization(simulationRoot);
     }
 
 
     private TAction BestActionWithDeterminization(Node root)
     {
-        Dictionary<TAction, int> wins = [];
-        foreach ((var key, var child)  in root.Children)
+        if (root.DeterminizationNode)
         {
-            foreach ((var key2, var grandchild) in child.Children)
+            // If the root is a node with children as determinizations
+            // sum up the number of win for each possible action
+            Dictionary<TAction, int> wins = [];
+            foreach ((var key, var child) in root.Children)
             {
-                wins.TryAdd(key2, 0);
-                wins[key2] += grandchild.Wins;
+                foreach ((var key2, var grandchild) in child.Children)
+                {
+                    wins.TryAdd(key2, 0);
+                    wins[key2] += grandchild.Wins;
+                }
             }
+            // Return the action with max number of wins
+            return wins.MaxBy(item => item.Value).Key;
         }
-        return wins.MaxBy(item => item.Value).Key;
+        // Otherwise return the key to the child with most wins
+        return root.Children.MaxBy(item => item.Value.Wins).Key;
     }
 
 }
