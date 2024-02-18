@@ -7,20 +7,23 @@ internal class Program
 {
     static void Main(string[] args)
     {
-        int numberOfDetectives = 2;
+        int numberOfDetectives = 4;
         Dictionary<Transport, int> initialTokens = new() { { Transport.Cab, 12 }, { Transport.Taxi, 5 } };
         //Map map = MapCreator.EasyMap();
         //Map map = MapCreator.CircleWithX();
-        //Map map = MapCreator.CheckBoard(4, 4);
-        Map map = MapCreator.CheckBoardWithTwoVehicles(4, 4);
+        //Map map = MapCreator.CheckBoard(7,7);
+        Map map = MapCreator.CheckBoardWithTwoVehicles(12,12);
 
-        int numberOfRepeats = 1;
+        // 8,8 2det1 vs fant0.1 - 49/50
+        // 8,8 5det1 vs fant0.1 - 39/50
+
+        int numberOfRepeats = 10;
         int fantomWins = 0;
 
         for (int i = 0; i < numberOfRepeats; i++)
         {
             Console.WriteLine($"Game {i+1}");
-            GameRules gameRules = new(gameLen: 8, numberOfDetectives: numberOfDetectives, fantomStartTokens: initialTokens, detectivesStartTokens: initialTokens);
+            GameRules gameRules = new(gameLen: 15, numberOfDetectives: numberOfDetectives, fantomStartTokens: initialTokens, detectivesStartTokens: initialTokens);
             GameInfo<Map, Node> gameInfo = new(map: map, gameRules: gameRules);
 
 
@@ -36,7 +39,7 @@ internal class Program
             Simulator<Map, Node> simulator = new(gameInfo: gameInfo,
                 fantom: fantom,
                 detectives: detectives,
-                logger: new ConsoleLogger(verbosity: 5));
+                logger: new ConsoleLogger(verbosity: 0));
 
             var outcome = simulator.SimulateWholeGame();
             if (outcome == GameOutcome.FantomWon)
@@ -65,13 +68,6 @@ internal class Program
         //mcts = new();
         //action = mcts.Simulate(tree, 1);
         //PrintActions(action);
-    }
-
-    public static void PrintActions(GlassesFantomAction actions)
-    {
-        foreach (var a in actions.Moves)
-            Console.Write(a);
-        Console.WriteLine();
     }
 }
 

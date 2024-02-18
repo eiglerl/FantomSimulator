@@ -3,8 +3,6 @@ namespace ActualSimulator;
 
 public struct FantomGameAction
 {
-    //public List<(INode? From, INode To)> Moves;
-    //public List<Transport?> UsedTransports;
     public List<Move> Moves;
 
     public override readonly int GetHashCode()
@@ -21,14 +19,24 @@ public struct FantomGameAction
         }
     }
 
+    public readonly bool Equals(FantomGameAction other)
+    {
+        if (Moves.Count != other.Moves.Count)
+            return false;
+
+        for (int i = 0; i < Moves.Count; i++)
+        {
+            if (Moves[i].NewPosition != other.Moves[i].NewPosition || Moves[i].Tr != other.Moves[i].Tr)
+                return false;
+        }
+
+        return true;
+    }
+
     public override readonly bool Equals(object obj)
     {
         if (obj is FantomGameAction otherAction)
-        {
-            return Moves.Count == otherAction.Moves.Count &&
-                   Moves.Zip(otherAction.Moves, (move1, move2) =>
-                       move1.NewPosition == move2.NewPosition && move1.Tr == move2.Tr).All(x => x);
-        }
+            return Equals(otherAction);
         return false;
     }
 

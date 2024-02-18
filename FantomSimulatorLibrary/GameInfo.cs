@@ -1,4 +1,5 @@
 ﻿using FantomMapLibrary;
+using System.Linq;
 namespace FantomSimulatorLibrary;
 
 public class GameInfo<MapType, NodeType>
@@ -100,9 +101,30 @@ public class GameInfo<MapType, NodeType>
         }
         return false;
     }
+
+    private bool IsPlayerBlocked(int pos, Dictionary<Transport, int> playerTokens)
+    {
+        var node = Map.GetNodeByID(pos);
+        var connectedNodes = node.ConnectedNodes.Where(x => playerTokens.ContainsKey(x.Key) && playerTokens[x.Key] > 0).Select(x => x.Value);
+        
+        var taken = DetectivesInfo.Select(x => x.Position).Where(x => x != pos).ToHashSet();
+
+        foreach (var reachableNodesByTransport in connectedNodes)
+        {
+            foreach (var possibleNode in reachableNodesByTransport)
+            {
+                if (!taken.Contains(possibleNode.ID))
+                    return false;
+            }
+        }
+        return true;
+    }
     public bool IsMovePossible(Move move)
     {
         var playerInfo = CurrentPlayer;
+
+        if (playerInfo.Position == move.NewPosition && IsPlayerBlocked(move.NewPosition, playerInfo.Tokens))
+            return true;
 
         if (!WhoPlaysNow.FantomPlays && IsSpaceOccupiedByAnotherDetective(move.NewPosition, WhoPlaysNow.DetectiveIndex))
         {
@@ -117,11 +139,11 @@ public class GameInfo<MapType, NodeType>
         var newNode = Map.GetNodeByID(move.NewPosition);
 
         // Can move to every non occupied space
-        if (TurnCounter == 0)   
+        if ((TurnCounter == 0)) //&& WhoPlaysNow.FantomPlays) || (TurnCounter == 1 && !WhoPlaysNow.FantomPlays))   
             return true;            
 
         // The nodes are not connected using the selected transport
-        if (!currentNode.ConnectedNodes[move.Tr].Contains(newNode))
+        if (!currentNode.ConnectedNodes.ContainsKey(move.Tr) || !currentNode.ConnectedNodes[move.Tr].Contains(newNode))
             return false;
 
         // Has enough tokens
@@ -142,8 +164,8 @@ public class GameInfo<MapType, NodeType>
 
     public Move RandomMoveForPlayer()
     {
-
         var playerInfo = CurrentPlayer;
+        Console.WriteLine($" {playerInfo.Position}");
         if (WhoPlaysNow.FantomPlays)
             Console.WriteLine("WTF Fantom");
         else

@@ -52,7 +52,7 @@ public class DetectivesAIMCTS : IPlayerBase<Map, Node>
         {
             var tree = new MonteCarloTreeSearch<FantomGameState, FantomGameAction>.Tree(MapDescription, CurrentState);
             MonteCarloTreeSearch<FantomGameState, FantomGameAction> mcts = new();
-            double time = 1.5; //+ ((CurrentState.Turn == 1) ? 1500 : 0);
+            double time = 2; //+ ((CurrentState.Turn == 1) ? 1500 : 0);
             CurrentAction = mcts.Simulate(tree, time);
         }
         return CurrentAction.Value.Moves[PlayerCounter];
@@ -67,6 +67,11 @@ public class DetectivesAIMCTS : IPlayerBase<Map, Node>
     {
         CurrentState = MapDescription.NextState(CurrentState, new FantomGameAction() { Moves = [move] });
         Opponent.MoveTo(move);
+
+        //Console.Write("Possible fantom positions: ");
+        //foreach (var pos in CurrentState.FantomPossiblePositions)
+        //    Console.Write($"{pos}, ");
+        //Console.WriteLine();
     }
 
     public void PlayIsNotOK(Move lastMove)

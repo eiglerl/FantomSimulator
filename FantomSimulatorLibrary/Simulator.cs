@@ -1,5 +1,4 @@
 ﻿using FantomMapLibrary;
-using System.Security;
 
 namespace FantomSimulatorLibrary;
 
@@ -20,13 +19,37 @@ public class Simulator<MapType, NodeType> : ISimulator
     private GameInfo<MapType, NodeType> _gameInfo;
     private IPlayerBase<MapType, NodeType> _fantomPlayer;
     private IPlayerBase<MapType, NodeType> _detectivesPlayer;
-    private HashSet<int> _fantomVisibleTurns = [2,5];
+    private HashSet<int> _fantomVisibleTurns = [3, 6, 11, 16, 21];
+    // OLD
     // [3,5] - 33/50 fantom win
     // [5] - 45/50
     // [2,5] 34/50
 
+    // NEW 
+    // [3,5] - 25/50
+    // [5] - 36/50
+    // [2,5] 27/50
 
-    public Simulator(GameInfo<MapType, NodeType> gameInfo, IPlayerBase<MapType, NodeType> fantom, IPlayerBase<MapType, NodeType> detectives, ILogger logger)
+
+    public delegate void GetNextMove(Move move);
+    private GetNextMove RecieveNextMoveCall;
+    public void UpdateCallOnMoveDelegate(GetNextMove function)
+    {
+        RecieveNextMoveCall += function;
+    }
+
+    public delegate void GetGameOutcome(GameOutcome outcome);
+    private GetGameOutcome RecieveGameOutcomeCall;
+    public void UpdateCallOnGameOutcomeDelegate(GetGameOutcome function)
+    {
+        RecieveGameOutcomeCall += function;
+    }
+
+
+    public Simulator(
+        GameInfo<MapType, NodeType> gameInfo,
+        IPlayerBase<MapType, NodeType> fantom, IPlayerBase<MapType, NodeType> detectives,
+        ILogger logger)
     {
         _logger = logger;
         _fantomPlayer = fantom;
@@ -54,7 +77,10 @@ public class Simulator<MapType, NodeType> : ISimulator
         var move = currentPlayer.GetMove();
 
         if (!_gameInfo.IsMovePossible(move))
+        {
+            Console.Write($"Tried to move to {move.NewPosition} from");
             move = _gameInfo.RandomMoveForPlayer();
+        }
 
         if (whoPlaysNow.FantomPlays)
             _logger.LogMessage(LogType.Info, $"Turn {_gameInfo.TurnCounter}");
@@ -70,8 +96,8 @@ public class Simulator<MapType, NodeType> : ISimulator
         else
         {
             opponentPlayer.OpponentMove(move);
-            //if (whoPlaysNow.FantomPlays)
-            //    Console.WriteLine($"Detectives recieve {move.NewPosition}");
+            if (whoPlaysNow.FantomPlays)
+                Console.WriteLine($"Detectives recieve {move.NewPosition}");
         }
 
         _gameInfo.AcceptMove(move);

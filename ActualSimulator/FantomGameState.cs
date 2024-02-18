@@ -1,10 +1,9 @@
 ﻿using FantomMapLibrary;
 namespace ActualSimulator;
 
-public struct FantomGameState //: IDeterminizableState<FantomGameState>
+public struct FantomGameState
 {
-    public int? FantomPosition;
-    public HashSet<int> FantomPossiblePositions;
+    public HashSet<int>? FantomPossiblePositions;
     public Dictionary<Transport, int> FantomTokens;
 
     public List<int?> DetectivesPositions;
@@ -17,7 +16,6 @@ public struct FantomGameState //: IDeterminizableState<FantomGameState>
     {
         FantomGameState state = new()
         {
-            FantomPosition = null,
             FantomPossiblePositions = [],
             FantomTokens = new(fantomTokens),
 
@@ -36,33 +34,33 @@ public struct FantomGameState //: IDeterminizableState<FantomGameState>
         return state;
     }
 
+    public bool IsFantomPositionKnown()
+        => FantomPossiblePositions is not null && FantomPossiblePositions.Count == 1;
+
+    public int GetFantomExactPositionIfKnown()
+    {
+        if (!IsFantomPositionKnown())
+            throw new ArgumentException("Fantom position is not known");
+        return FantomPossiblePositions.First();
+    }
+
     public FantomGameState Deepcopy()
     {
         FantomGameState copy = new()
         {
-            FantomPosition = this.FantomPosition,
-            FantomPossiblePositions = this.FantomPossiblePositions,
+            FantomPossiblePositions = new(this.FantomPossiblePositions),
             FantomTokens = new(this.FantomTokens),
 
             DetectivesPositions = new(this.DetectivesPositions),
-            DetectivesTokens = new(this.DetectivesTokens),
+            DetectivesTokens = new(),
 
             Turn = this.Turn,
             FantomsTurn = this.FantomsTurn
         };
+        foreach (var tokens in this.DetectivesTokens)
+        {
+            copy.DetectivesTokens.Add(new(tokens));
+        }
         return copy;
-    }
-
-    public FantomGameState DeterminizeUniform(Random rnd)
-    {
-        var determinizedState = this.Deepcopy();
-        int possibleStatesCount = determinizedState.FantomPossiblePositions.Count;
-        if (possibleStatesCount <= 1)
-            return determinizedState;
-        var possibleStates = determinizedState.FantomPossiblePositions.ToArray();
-        var chosenState = possibleStates[rnd.Next(possibleStatesCount)];
-        determinizedState.FantomPosition = chosenState;
-        determinizedState.FantomPossiblePositions = [];
-        return determinizedState;
     }
 }

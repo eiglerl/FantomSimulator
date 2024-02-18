@@ -49,7 +49,7 @@ public class FantomAIMCTS : IPlayerBase<Map, Node>
     {
         var tree = new MonteCarloTreeSearch<FantomGameState, FantomGameAction>.Tree(MapDescription, CurrentState);
         MonteCarloTreeSearch<FantomGameState, FantomGameAction> mcts = new();
-        FantomGameAction move = mcts.Simulate(tree, 0.2);
+        FantomGameAction move = mcts.Simulate(tree, 2);
         return move.Moves[0];
     }
 
