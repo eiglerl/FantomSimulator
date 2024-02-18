@@ -3,8 +3,17 @@ using FantomSimulatorLibrary;
 using FantomMapLibrary;
 using ActualSimulator;
 
+
 internal class Program
 {
+    public static void WriteGameOutcome(GameOutcome outcome)
+    {
+        if (outcome == GameOutcome.DetectivesWon)
+            Console.WriteLine("Detectives won");
+        else if (outcome == GameOutcome.FantomWon)
+            Console.WriteLine("Fantom won");
+    }
+
     static void Main(string[] args)
     {
         int numberOfDetectives = 4;
@@ -40,6 +49,7 @@ internal class Program
                 fantom: fantom,
                 detectives: detectives,
                 logger: new ConsoleLogger(verbosity: 0));
+            simulator.UpdateCallOnGameOutcomeDelegate(WriteGameOutcome);
 
             var outcome = simulator.SimulateWholeGame();
             if (outcome == GameOutcome.FantomWon)

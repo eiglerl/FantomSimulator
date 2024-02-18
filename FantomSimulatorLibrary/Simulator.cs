@@ -15,7 +15,7 @@ public class Simulator<MapType, NodeType> : ISimulator
     where MapType : IMap<NodeType>
     where NodeType : INode
 {
-    private ILogger _logger;
+    //private ILogger _logger;
     private GameInfo<MapType, NodeType> _gameInfo;
     private IPlayerBase<MapType, NodeType> _fantomPlayer;
     private IPlayerBase<MapType, NodeType> _detectivesPlayer;
@@ -35,14 +35,31 @@ public class Simulator<MapType, NodeType> : ISimulator
     private GetNextMove RecieveNextMoveCall;
     public void UpdateCallOnMoveDelegate(GetNextMove function)
     {
-        RecieveNextMoveCall += function;
+        if (RecieveNextMoveCall is null)
+            RecieveNextMoveCall = function;
+        else
+            RecieveNextMoveCall += function;
     }
+    private void CallNextMoveDelegates(Move move)
+    {
+        if (RecieveNextMoveCall is not null)
+            RecieveNextMoveCall.Invoke(move);
+    }
+
 
     public delegate void GetGameOutcome(GameOutcome outcome);
     private GetGameOutcome RecieveGameOutcomeCall;
     public void UpdateCallOnGameOutcomeDelegate(GetGameOutcome function)
     {
-        RecieveGameOutcomeCall += function;
+        if (RecieveGameOutcomeCall is null)
+            RecieveGameOutcomeCall = function;
+        else
+            RecieveGameOutcomeCall += function; 
+    }
+    private void CallGameOutcomeDelegates(GameOutcome outcome)
+    {
+        if (RecieveGameOutcomeCall is not null)
+            RecieveGameOutcomeCall.Invoke(outcome);
     }
 
 
@@ -51,10 +68,12 @@ public class Simulator<MapType, NodeType> : ISimulator
         IPlayerBase<MapType, NodeType> fantom, IPlayerBase<MapType, NodeType> detectives,
         ILogger logger)
     {
-        _logger = logger;
+        //_logger = logger;
         _fantomPlayer = fantom;
         _detectivesPlayer = detectives;
         _gameInfo = gameInfo;
+
+        //RecieveNextMoveCall = new GetNextMove();
     }
     public void SimulateOneStep()
     {
@@ -66,13 +85,13 @@ public class Simulator<MapType, NodeType> : ISimulator
             currentPlayer = _fantomPlayer;
             opponentPlayer = _detectivesPlayer;
             _gameInfo.TurnCounter++;
-            _logger.Var = "Fantom";
+            //_logger.Var = "Fantom";
         }
         else
         {
             currentPlayer = _detectivesPlayer;
             opponentPlayer = _fantomPlayer;
-            _logger.Var = $"Detective {whoPlaysNow.DetectiveIndex + 1}";
+            //_logger.Var = $"Detective {whoPlaysNow.DetectiveIndex + 1}";
         }
         var move = currentPlayer.GetMove();
 
@@ -82,35 +101,39 @@ public class Simulator<MapType, NodeType> : ISimulator
             move = _gameInfo.RandomMoveForPlayer();
         }
 
-        if (whoPlaysNow.FantomPlays)
-            _logger.LogMessage(LogType.Info, $"Turn {_gameInfo.TurnCounter}");
-        _logger.LogMessage(LogType.Move, $"{_logger.Var} moves to {move.NewPosition} using {move.Tr}");
-        
+        //if (whoPlaysNow.FantomPlays)
+        //    _logger.LogMessage(LogType.Info, $"Turn {_gameInfo.TurnCounter}");
+        //_logger.LogMessage(LogType.Move, $"{_logger.Var} moves to {move.NewPosition} using {move.Tr}");
+
+        //RecieveNextMoveCall.Invoke(move);
+        CallNextMoveDelegates(move);
+
         currentPlayer.PlayIsOK(move);
+
+        // If fantom is not visible detectives recieve only used transport
         if (whoPlaysNow.FantomPlays && !_fantomVisibleTurns.Contains(_gameInfo.TurnCounter))
         {
             opponentPlayer.OpponentMove(new Move(move.Tr));
-            //if (whoPlaysNow.FantomPlays)
-            //    Console.WriteLine($"Detectives recieve {new Move(move.Tr).NewPosition}");
         }
         else
         {
             opponentPlayer.OpponentMove(move);
-            if (whoPlaysNow.FantomPlays)
-                Console.WriteLine($"Detectives recieve {move.NewPosition}");
         }
 
         _gameInfo.AcceptMove(move);
 
-        if (_gameInfo.IsGameOver() != GameOutcome.NotYet)
-        {
-            if (_gameInfo.IsGameOver() == GameOutcome.FantomWon)
-                _logger.Var = "Fantom";
-            else
-                _logger.Var = "Detectives";
-            _logger.LogMessage(LogType.Move, $"{_logger.Var} won!");
-        }
-            
+        //RecieveGameOutcomeCall.Invoke(_gameInfo.IsGameOver());
+        CallGameOutcomeDelegates(_gameInfo.IsGameOver());
+
+        //if (_gameInfo.IsGameOver() != GameOutcome.NotYet)
+        //{
+        //    if (_gameInfo.IsGameOver() == GameOutcome.FantomWon)
+        //        _logger.Var = "Fantom";
+        //    else
+        //        _logger.Var = "Detectives";
+        //    _logger.LogMessage(LogType.Move, $"{_logger.Var} won!");
+        //}
+
     }
 
     public GameOutcome SimulateWholeGame()
