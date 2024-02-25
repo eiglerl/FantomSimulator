@@ -58,7 +58,7 @@ public class Simulator<MapType, NodeType> : ISimulator
     }
     private void CallGameOutcomeDelegates(GameOutcome outcome)
     {
-        if (RecieveGameOutcomeCall is not null)
+        if (RecieveGameOutcomeCall is not null && (outcome == GameOutcome.FantomWon || outcome == GameOutcome.DetectivesWon))
             RecieveGameOutcomeCall.Invoke(outcome);
     }
 

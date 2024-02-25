@@ -164,7 +164,7 @@ public class MonteCarloTreeSearch<TStateType, TAction>
         public void BackPropagate(Node? node, double result)
         {
             if (node is null)
-                return;
+                return; 
             node.UpdateStats(result);
             BackPropagate(node.Parent, result);
         }
