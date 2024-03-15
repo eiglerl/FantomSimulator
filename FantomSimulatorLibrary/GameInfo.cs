@@ -193,7 +193,12 @@ public class GameInfo<MapType, NodeType>
 
     public void AcceptMove(Move move)
     {
+        var whoPlays = WhoPlaysNow;
+        if (!whoPlays.FantomPlays && move.ContainsTransport())
+            FantomInfo.UpdateTokens(move.Tr, 1);
+
         var playerInfo = CurrentPlayer;
+
         playerInfo.MoveTo(move);
         CurrentPlayer = playerInfo;
         _exactPlayerNow = (_exactPlayerNow + 1)%(1 + GameRules.NumberOfDetectives);

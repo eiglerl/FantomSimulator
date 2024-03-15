@@ -19,7 +19,7 @@ public class Simulator<MapType, NodeType> : ISimulator
     private GameInfo<MapType, NodeType> _gameInfo;
     private IPlayerBase<MapType, NodeType> _fantomPlayer;
     private IPlayerBase<MapType, NodeType> _detectivesPlayer;
-    private HashSet<int> _fantomVisibleTurns = [3, 6, 11, 16, 21];
+    private HashSet<int> _fantomVisibleTurns = [3, 8, 13, 18, 21];
     // OLD
     // [3,5] - 33/50 fantom win
     // [5] - 45/50
