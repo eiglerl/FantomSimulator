@@ -12,6 +12,7 @@ public class FantomAIMCTS : IPlayerBase<Map, Node>
     int numberOfDetectives;
     int OpponentCounter = 0;
     List<Move> OpponentMoves;
+    Random rnd;
 
     MapDescription MapDescription { get; set; }
 
@@ -41,15 +42,17 @@ public class FantomAIMCTS : IPlayerBase<Map, Node>
         {
             Opponents.Add(new() { Position = null, Tokens = [] });
         }
-
-        MapDescription = new MapDescription(Map, gameLen: 15);
+        rnd = new();
+        MapDescription = new MapDescription(Map, gameLen: 24);
     }
 
     public Move GetMove()
     {
-        var tree = new MonteCarloTreeSearch<FantomGameState, FantomGameAction>.Tree(MapDescription, CurrentState);
+        var tree = new MonteCarloTreeSearch<FantomGameState, FantomGameAction>.Tree(MapDescription, CurrentState, rnd);
         MonteCarloTreeSearch<FantomGameState, FantomGameAction> mcts = new();
-        FantomGameAction move = mcts.Simulate(tree, 2);
+        FantomGameAction move = mcts.Simulate(tree, 0.2);
+        //if (move.Moves[0].Tr == Transport.Taxi)
+            //Console.WriteLine("not cab");
         return move.Moves[0];
     }
 
@@ -58,10 +61,17 @@ public class FantomAIMCTS : IPlayerBase<Map, Node>
         return Task.Run(GetMove);
     }
 
+    private void UpdateTokens(Move move)
+    {
+        if (move.ContainsTransport())
+            CurrentState.FantomTokens[move.Tr]++;
+    }
+
     public void OpponentMove(Move move)
     {
         int index = OpponentCounter;
         OpponentMoves.Add(move);
+        UpdateTokens(move);
 
         if (index == numberOfDetectives - 1)
         {

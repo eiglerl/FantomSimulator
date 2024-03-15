@@ -214,20 +214,20 @@ public class MonteCarloTreeSearch<TStateType, TAction>
         return BestActionWithDeterminization(simulationRoot);
     }
 
-    public TAction Simulate(Tree tree, int iterations)
-    {
-        var simulationRoot = PrepareDeterminizationsIfNeccessary(tree.Root);
+    //public TAction Simulate(Tree tree, int iterations)
+    //{
+    //    var simulationRoot = PrepareDeterminizationsIfNeccessary(tree.Root);
 
-        for (int i = 0; i < iterations; i++)
-        {
-            var leaf = tree.Traverse(simulationRoot);
-            var simulationResult = tree.Rollout(leaf);
-            if (simulationResult.HasValue)
-                tree.BackPropagate(leaf, simulationResult.Value);
-        }
+    //    for (int i = 0; i < iterations; i++)
+    //    {
+    //        var leaf = tree.Traverse(simulationRoot);
+    //        var simulationResult = tree.Rollout(leaf);
+    //        if (simulationResult.HasValue)
+    //            tree.BackPropagate(leaf, simulationResult.Value);
+    //    }
 
-        return BestActionWithDeterminization(simulationRoot);
-    }
+    //    return BestActionWithDeterminization(simulationRoot);
+    //}
 
     private TAction BestActionWithDeterminization(Node root)
     {

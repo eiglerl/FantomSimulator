@@ -14,6 +14,7 @@ public class DetectivesAIMCTS : IPlayerBase<Map, Node>
     int PlayerCounter = 0;
     FantomGameAction? CurrentAction = null;
     List<Move> Moves;
+    Random rnd;
 
     MapDescription MapDescription { get; set; }
     FantomGameState? currentState = null;
@@ -42,8 +43,14 @@ public class DetectivesAIMCTS : IPlayerBase<Map, Node>
         {
             Players.Add(new() { Position = null, Tokens = [] });
         }
-        MapDescription = new MapDescription(Map, 15, fantomPlayer: false);
+        rnd = new();
+        MapDescription = new MapDescription(Map, 24, fantomPlayer: false);
 
+    }
+    private void UpdateFantomTokens(Move move)
+    {
+        if (move.ContainsTransport())
+            CurrentState.FantomTokens[move.Tr]++;
     }
 
     public Move GetMove()
@@ -52,7 +59,7 @@ public class DetectivesAIMCTS : IPlayerBase<Map, Node>
         {
             var tree = new MonteCarloTreeSearch<FantomGameState, FantomGameAction>.Tree(MapDescription, CurrentState);
             MonteCarloTreeSearch<FantomGameState, FantomGameAction> mcts = new();
-            double time = 2; //+ ((CurrentState.Turn == 1) ? 1500 : 0);
+            double time = 4; //+ ((CurrentState.Turn == 1) ? 1500 : 0);
             CurrentAction = mcts.Simulate(tree, time);
         }
         return CurrentAction.Value.Moves[PlayerCounter];
@@ -91,6 +98,7 @@ public class DetectivesAIMCTS : IPlayerBase<Map, Node>
             CurrentAction = null;
         }
 
+        UpdateFantomTokens(lastMove);
         Players[index].MoveTo(lastMove);
         PlayerCounter = (PlayerCounter + 1) % numberOfDetectives;
     }
