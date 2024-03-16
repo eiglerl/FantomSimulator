@@ -2,7 +2,7 @@
 
 namespace ActualSimulator;
 
-public class DetectivesAI : IPlayerBase<Map, Node>
+public class DetectivesRandomAI : IPlayerBase<Map, Node>
 {
     Map Map { get; set; }
     Dictionary<Transport, int> OpponentTransports { get; set; }
@@ -12,7 +12,7 @@ public class DetectivesAI : IPlayerBase<Map, Node>
     List<int?> CurrentPositions;
     int PlayerCounter = 0;
 
-    private DetectivesAI(Map map, int numberOfDetectives)
+    private DetectivesRandomAI(Map map, int numberOfDetectives)
     {
         Map = map;
         Transports = [];
@@ -48,7 +48,7 @@ public class DetectivesAI : IPlayerBase<Map, Node>
         else
         {
             var node = Map.GetNodeByID(CurrentPositions[PlayerCounter].Value);
-            HashSet<Transport> possibleTransports = new(Transports[PlayerCounter].Where(x => x.Value > 0).Select(x => x.Key));
+            HashSet<Transport> possibleTransports = new(Transports[PlayerCounter].Where(x => x.Value > 0 && node.Transports.Contains(x.Key)).Select(x => x.Key));
             List<Move> possibleMoves = [];
             foreach (var tr in possibleTransports)
             {
@@ -56,6 +56,8 @@ public class DetectivesAI : IPlayerBase<Map, Node>
                 foreach (var n in possibleNodes)
                     possibleMoves.Add(new(n.ID, tr));
             }
+            if (possibleMoves.Count == 0)
+                return new(CurrentPositions[PlayerCounter].Value);
             return possibleMoves[rnd.Next(possibleMoves.Count)];
         }
     }
@@ -98,5 +100,5 @@ public class DetectivesAI : IPlayerBase<Map, Node>
     }
 
     // Factory method to create an instance of the player
-    public static DetectivesAI CreateInstance(Map ggs, int numberOfDetectives) => new(ggs, numberOfDetectives);
+    public static DetectivesRandomAI CreateInstance(Map ggs, int numberOfDetectives) => new(ggs, numberOfDetectives);
 }

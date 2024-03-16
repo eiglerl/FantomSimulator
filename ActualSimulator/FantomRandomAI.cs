@@ -2,7 +2,7 @@
 
 namespace ActualSimulator;
 
-public class FantomAI : IPlayerBase<Map, Node>
+public class FantomRandomAI : IPlayerBase<Map, Node>
 {
     Map Map { get; set; }
     Dictionary<Transport, int> Transports { get; set; }
@@ -12,7 +12,7 @@ public class FantomAI : IPlayerBase<Map, Node>
     List<int?> OpponentPositions;
     int OpponentCounter = 0;
 
-    private FantomAI(Map map, int numberOfDetectives)
+    private FantomRandomAI(Map map, int numberOfDetectives)
     {
         Map = map;
         Transports = [];
@@ -47,13 +47,17 @@ public class FantomAI : IPlayerBase<Map, Node>
         else
         {
             var node = Map.GetNodeByID(CurrentPosition.Value);
-            HashSet<Transport> possibleTransports = new(Transports.Where(x => x.Value > 0).Select(x => x.Key));
+            HashSet<Transport> possibleTransports = new(Transports.Where(x => x.Value > 0 && node.Transports.Contains(x.Key)).Select(x => x.Key));
             List<Move> possibleMoves = [];
             foreach (var tr in possibleTransports)
             {
                 HashSet<INode> possibleNodes = node.ConnectedNodes[tr];
                 foreach (var n in possibleNodes)
                     possibleMoves.Add(new(n.ID, tr));
+            }
+            if (possibleMoves.Count == 0)
+            {
+                return new(CurrentPosition.Value);
             }
             return possibleMoves[rnd.Next(possibleMoves.Count)];
         }
@@ -64,12 +68,20 @@ public class FantomAI : IPlayerBase<Map, Node>
         return Task.Run(GetMove);
     }
 
+    private void UpdateTokens(Move move)
+    {
+        if (move.ContainsTransport())
+            Transports[move.Tr]++;
+    }
+
+
     public void OpponentMove(Move move)
     {
         int index = OpponentCounter;
         OpponentPositions[index] = move.NewPosition;
-        if (move.Tr != Transport.Nothing)
+        if (move.ContainsTransport())
             OpponentTransports[index][move.Tr]--;
+        UpdateTokens(move);
         OpponentCounter = (OpponentCounter + 1) % OpponentTransports.Count;
     }
 
@@ -96,6 +108,6 @@ public class FantomAI : IPlayerBase<Map, Node>
     
 
     // Factory method to create an instance of the player
-    public static FantomAI CreateInstance(Map ggs, int numberOfDetectives) => new(ggs, numberOfDetectives);
+    public static FantomRandomAI CreateInstance(Map ggs, int numberOfDetectives) => new(ggs, numberOfDetectives);
 
 }
