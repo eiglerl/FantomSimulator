@@ -572,6 +572,8 @@ public class MapDescription : IGameDescription<FantomGameState, FantomGameAction
                     temp.Add(node.ID);
             }
         }
+        if (temp.Count == 0)
+            temp = new(state.FantomPossiblePositions);
         state.FantomPossiblePositions = temp;
         return state;
     }
