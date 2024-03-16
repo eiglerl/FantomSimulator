@@ -2,8 +2,8 @@
 
 public enum Transport
 {
-    Nothing,
     Cab, 
     Taxi,
-    Tram
+    Tram,
+    Nothing
 }
